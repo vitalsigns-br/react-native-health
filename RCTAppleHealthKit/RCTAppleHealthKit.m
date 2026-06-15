@@ -44,15 +44,6 @@ RCT_EXPORT_MODULE();
     return sharedInstance;
 }
 
-+ (RCTCallableJSModules *)sharedJsModule {
-    static RCTCallableJSModules *sharedJsModule = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedJsModule = [RCTCallableJSModules new];
-    });
-    return sharedJsModule;
-}
-
 - (id) init
 {
     return [super init];
@@ -840,8 +831,10 @@ RCT_EXPORT_METHOD(getClinicalRecords:(NSDictionary *)input callback:(RCTResponse
 
 - (void)emitEventInternal:(NSNotification *)notification {
   if (self.hasListeners) {
-    self.callableJSModules = [RCTAppleHealthKit sharedJsModule];
-    [self.callableJSModules setBridge:self.bridge];
+    // RN 0.85 / bridgeless: event delivery is wired by the framework when the
+    // module is registered. The legacy RCTCallableJSModules/-setBridge: plumbing
+    // is gated behind RCT_REMOVE_LEGACY_ARCH and is unnecessary here, so we rely
+    // on RCTEventEmitter's supported -sendEventWithName:body: directly.
     [self sendEventWithName:notification.name
                    body:notification.userInfo];
   }
